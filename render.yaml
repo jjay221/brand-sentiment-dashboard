@@ -2,6 +2,7 @@ services:
   - type: web
     name: brand-sentiment-dashboard
     env: python
+    pythonVersion: 3.11.0
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:server
     envVars:
