@@ -6,7 +6,7 @@ numpy>=1.26.2
 requests==2.31.0
 beautifulsoup4==4.12.2
 vaderSentiment==3.3.2
-sqlalchemy==2.0.23
+sqlalchemy>=2.0.36
 psycopg2-binary==2.9.9
 python-dotenv==1.0.0
 supabase==2.3.0
