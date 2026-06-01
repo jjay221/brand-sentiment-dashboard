@@ -1,0 +1,15 @@
+dash==2.14.2
+dash-bootstrap-components==1.5.0
+plotly==5.18.0
+pandas==2.1.4
+numpy==1.26.2
+requests==2.31.0
+beautifulsoup4==4.12.2
+vaderSentiment==3.3.2
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+python-dotenv==1.0.0
+supabase==2.3.0
+transformers==4.36.2
+torch==2.1.2
+gunicorn==21.2.0
