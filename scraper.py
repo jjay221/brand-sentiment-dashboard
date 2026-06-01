@@ -350,3 +350,31 @@ if __name__ == '__main__':
     run_full_scrape()
 
 
+
+# ============================================================
+# On-Demand Scraper — for any brand searched from dashboard
+# ============================================================
+
+def scrape_brand_on_demand(brand_name: str, max_posts: int = 25):
+    db = SessionLocal()
+    try:
+        from sqlalchemy import text as sql_text
+        result = db.execute(sql_text("""
+            SELECT COUNT(*) FROM scrape_history
+            WHERE brand = :brand
+            AND scraped_at > NOW() - INTERVAL '24 hours'
+            AND status = 'success'
+        """), {'brand': brand_name}).scalar()
+
+        if result > 0:
+            return 0, 0, None
+
+        query = brand_name.lower().replace(' ', '+')
+        brand_url = f'https://old.reddit.com/search/?q={query}&sort=new&limit=25'
+        posts, comments = scrape_brand(brand_name, brand_url, db)
+        return posts, comments, None
+
+    except Exception as e:
+        return 0, 0, str(e)
+    finally:
+        db.close()
