@@ -307,5 +307,46 @@ def run_full_scrape():
     print('='*50)
 
 
+
 if __name__ == '__main__':
+
+    # ============================================================
+    # On-Demand Scraper — for any brand searched from dashboard
+    # ============================================================
+
+    def scrape_brand_on_demand(brand_name: str, max_posts: int = 25):
+        """
+        Scrape Reddit for any brand name on demand.
+        Called directly from app.py when a user searches a new brand.
+        Returns (posts_scraped, comments_scraped, error_message)
+        """
+        # Check if already scraped in last 24 hours
+        db = SessionLocal()
+        try:
+            from sqlalchemy import text as sql_text
+            result = db.execute(sql_text('''
+                SELECT COUNT(*) FROM scrape_history
+                WHERE brand = :brand
+                AND scraped_at > NOW() - INTERVAL '24 hours'
+                AND status = 'success'
+            '''), {'brand': brand_name}).scalar()
+
+            if result > 0:
+                print(f'{brand_name} already scraped in last 24hrs, using cache')
+                return 0, 0, None  # Cached — no scrape needed
+
+            # Build Reddit search URL dynamically
+            query = brand_name.lower().replace(' ', '+')
+            brand_url = f'https://old.reddit.com/search/?q={query}&sort=new&limit=25'
+
+            posts, comments = scrape_brand(brand_name, brand_url, db)
+            return posts, comments, None
+
+        except Exception as e:
+            return 0, 0, str(e)
+        finally:
+            db.close()
+
     run_full_scrape()
+
+

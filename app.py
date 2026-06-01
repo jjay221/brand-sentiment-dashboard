@@ -317,9 +317,43 @@ app.layout = dbc.Container([
             ], className='mt-3'),
         ]),
 
+# ── Tab 10: Search Any Brand ──────────────────────────
+        dbc.Tab(label='🔍 Search Any Brand', children=[
+            dbc.Row([
+                dbc.Col([
+                    html.H4('Search Any Brand on Reddit',
+                            style={'color': 'white', 'marginTop': '20px'}),
+                    html.P('Type any brand name and we\'ll scrape Reddit for sentiment analysis in real-time.',
+                           style={'color': '#95a5a6'}),
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Input(
+                                id='search-brand-input',
+                                placeholder='e.g. Nike, Protein World, Gorilla Mind...',
+                                type='text',
+                                style={'fontSize': '16px'}
+                            )
+                        ], width=7),
+                        dbc.Col([
+                            dbc.Button('🔍 Search Reddit',
+                                       id='search-brand-btn',
+                                       color='primary',
+                                       size='lg',
+                                       n_clicks=0)
+                        ], width=2),
+                    ], className='mb-3'),
+                    html.Div(id='search-brand-status',
+                             style={'color': '#f39c12', 'fontSize': '16px',
+                                    'marginBottom': '15px'}),
+                    html.Div(id='search-brand-results'),
+                ], width=10),
+            ], className='mt-3'),
+        ]),
     ]),
 
     # Auto refresh every 5 minutes
+
+
     dcc.Interval(id='interval', interval=300000, n_intervals=0)
 
 ], fluid=True, style={'backgroundColor': '#0d1117', 'minHeight': '100vh'})
@@ -820,7 +854,135 @@ def predict_post(n_clicks, title, content, brand):
                       font={'color': 'white'}, height=350)
     return output, fig
 
+# Search Any Brand Callback
+@app.callback(
+    Output('search-brand-status', 'children'),
+    Output('search-brand-results', 'children'),
+    Input('search-brand-btn', 'n_clicks'),
+    State('search-brand-input', 'value'),
+    prevent_initial_call=True
+)
+def search_any_brand(n_clicks, brand_name):
+    if not brand_name or not brand_name.strip():
+        return '⚠️ Please enter a brand name.', ''
 
+    brand_name = brand_name.strip().title()
+
+    try:
+        from scraper import scrape_brand_on_demand
+
+        # Check if cached
+        with engine.connect() as conn:
+            cached = conn.execute(text('''
+                SELECT COUNT(*) FROM scrape_history
+                WHERE brand = :brand
+                AND scraped_at > NOW() - INTERVAL '24 hours'
+                AND status = 'success'
+            '''), {'brand': brand_name}).scalar()
+
+        if cached > 0:
+            status_msg = f'✅ Showing cached results for "{brand_name}" (scraped in last 24hrs)'
+        else:
+            posts, comments, error = scrape_brand_on_demand(brand_name, max_posts=25)
+            if error:
+                return f'❌ Error: {error}', ''
+            status_msg = f'✅ Done! Found {posts} posts and {comments} comments for "{brand_name}"'
+
+        # Load results from DB
+        df = load_posts()
+        df_com = load_comments()
+        brand_df = df[df['brand'] == brand_name]
+        brand_com = df_com[df_com['brand'] == brand_name]
+
+        if len(brand_df) == 0:
+            return f'⚠️ No data found for "{brand_name}" on Reddit.', ''
+
+        # Build results
+        total = len(brand_df)
+        pos = len(brand_df[brand_df['vader_sentiment'] == 'Positive'])
+        neg = len(brand_df[brand_df['vader_sentiment'] == 'Negative'])
+        neu = len(brand_df[brand_df['vader_sentiment'] == 'Neutral'])
+        pos_pct = round(pos / total * 100, 1)
+        neg_pct = round(neg / total * 100, 1)
+
+        card_style = {'textAlign': 'center', 'padding': '15px',
+                      'borderRadius': '10px', 'background': '#1a252f'}
+
+        results = html.Div([
+            dbc.Row([
+                dbc.Col(dbc.Card([dbc.CardBody([
+                    html.H3(total, style={'color': '#3498db'}),
+                    html.P('Posts Found')
+                ])], style=card_style), width=2),
+                dbc.Col(dbc.Card([dbc.CardBody([
+                    html.H3(len(brand_com), style={'color': '#9b59b6'}),
+                    html.P('Comments')
+                ])], style=card_style), width=2),
+                dbc.Col(dbc.Card([dbc.CardBody([
+                    html.H3(f'{pos_pct}%', style={'color': '#2ecc71'}),
+                    html.P('Positive')
+                ])], style=card_style), width=2),
+                dbc.Col(dbc.Card([dbc.CardBody([
+                    html.H3(f'{neg_pct}%', style={'color': '#e74c3c'}),
+                    html.P('Negative')
+                ])], style=card_style), width=2),
+                dbc.Col(dbc.Card([dbc.CardBody([
+                    html.H3(round(brand_df['upvotes'].mean(), 1),
+                            style={'color': '#f39c12'}),
+                    html.P('Avg Upvotes')
+                ])], style=card_style), width=2),
+            ], className='mb-4'),
+
+            dbc.Row([
+                dbc.Col(dcc.Graph(
+                    figure=px.pie(
+                        values=[pos, neg, neu],
+                        names=['Positive', 'Negative', 'Neutral'],
+                        color_discrete_map=colors,
+                        title=f'Sentiment — {brand_name}',
+                        template='plotly_dark',
+                        hole=0.4
+                    ).update_layout(paper_bgcolor='#0d1117')
+                ), width=5),
+                dbc.Col(dcc.Graph(
+                    figure=px.bar(
+                        brand_df.groupby('vader_sentiment').size().reset_index(name='Count'),
+                        x='vader_sentiment', y='Count',
+                        color='vader_sentiment',
+                        color_discrete_map=colors,
+                        title=f'Post Breakdown — {brand_name}',
+                        template='plotly_dark'
+                    ).update_layout(paper_bgcolor='#0d1117', plot_bgcolor='#1a252f')
+                ), width=7),
+            ]),
+
+            html.H5(f'Top Posts for {brand_name}',
+                    style={'color': 'white', 'marginTop': '20px'}),
+            dbc.Table(
+                [html.Thead(html.Tr([
+                    html.Th('Title', style={'color': 'white'}),
+                    html.Th('Sentiment', style={'color': 'white'}),
+                    html.Th('Upvotes', style={'color': 'white'}),
+                    html.Th('Subreddit', style={'color': 'white'}),
+                ]))] + [html.Tbody([
+                    html.Tr([
+                        html.Td(str(row['title'])[:80],
+                                style={'color': 'white', 'fontSize': '12px'}),
+                        html.Td(row['vader_sentiment'],
+                                style={'color': colors.get(row['vader_sentiment'], 'white')}),
+                        html.Td(row['upvotes'], style={'color': 'white'}),
+                        html.Td(row['subreddit'], style={'color': '#95a5a6'}),
+                    ]) for _, row in brand_df.head(15).iterrows()
+                ])],
+                bordered=True, dark=True, hover=True,
+                responsive=True, size='sm'
+            ),
+        ])
+
+        return status_msg, results
+
+    except Exception as e:
+        return f'❌ Unexpected error: {str(e)}', ''
 # ============================================================
 # Run
 # ============================================================
