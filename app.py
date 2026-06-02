@@ -158,12 +158,6 @@ dbc.Row([
                   'marginBottom': '20px'})
     ])
 ], className='mb-3'),
-                    style={'color': '#3498db', 'fontWeight': 'bold', 'marginTop': '20px'}),
-            html.P('Real-time Reddit competitor analysis — Powered by AI',
-                   style={'color': '#95a5a6', 'fontSize': '16px'}),
-            html.Hr(style={'borderColor': '#2c3e50'})
-        ])
-    ]),
 
     # KPI Cards - loaded dynamically
     html.Div(id='kpi-cards', className='mb-4'),
