@@ -155,6 +155,166 @@ app.layout = dbc.Container([
         ])
     ], className='mb-3'),
 
+html.Hr(style={'borderColor': '#2c3e50', 'marginTop': '15px'}),
+
+html.H5('📖 The Story Behind BrandPulse:',
+        style={'color': 'white', 'marginTop': '10px'}),
+html.P(
+    'This project started as a simple class assignment to scrape '
+    'Reddit posts using Python. What began as homework quickly '
+    'evolved into a full AI-powered brand intelligence platform '
+    'built level by level — from basic web scraping all the way '
+    'to deep learning and cloud deployment.',
+    style={'color': '#bdc3c7', 'fontSize': '14px'}
+),
+
+html.H5('🤖 Models & Technologies Powering BrandPulse:',
+        style={'color': 'white', 'marginTop': '15px'}),
+
+dbc.Row([
+    dbc.Col([
+        dbc.Card([
+            dbc.CardBody([
+                html.H6('🔵 VADER', style={'color': '#3498db'}),
+                html.P(
+                    'Rule-based sentiment analyzer. '
+                    'Instantly scores every Reddit post '
+                    'and comment as Positive, Negative '
+                    'or Neutral using a dictionary of '
+                    'sentiment-weighted words.',
+                    style={'color': '#bdc3c7', 'fontSize': '12px'}
+                )
+            ])
+        ], style={'background': '#0d1117', 'height': '100%'})
+    ], width=3),
+
+    dbc.Col([
+        dbc.Card([
+            dbc.CardBody([
+                html.H6('🟣 RoBERTa (BERT)', style={'color': '#9b59b6'}),
+                html.P(
+                    'Deep learning transformer model '
+                    'trained on 58 million tweets. '
+                    'Understands full sentence context, '
+                    'slang and sarcasm — far more '
+                    'accurate than rule-based models.',
+                    style={'color': '#bdc3c7', 'fontSize': '12px'}
+                )
+            ])
+        ], style={'background': '#0d1117', 'height': '100%'})
+    ], width=3),
+
+    dbc.Col([
+        dbc.Card([
+            dbc.CardBody([
+                html.H6('🟡 LDA Topic Modeling',
+                        style={'color': '#f39c12'}),
+                html.P(
+                    'Unsupervised machine learning that '
+                    'automatically discovers hidden '
+                    'themes in Reddit posts without '
+                    'being told what to look for. '
+                    'Finds patterns humans might miss.',
+                    style={'color': '#bdc3c7', 'fontSize': '12px'}
+                )
+            ])
+        ], style={'background': '#0d1117', 'height': '100%'})
+    ], width=3),
+
+    dbc.Col([
+        dbc.Card([
+            dbc.CardBody([
+                html.H6('🟢 Random Forest',
+                        style={'color': '#2ecc71'}),
+                html.P(
+                    'Ensemble machine learning model '
+                    'that predicts whether a Reddit '
+                    'post will get high or low upvotes '
+                    'based on content, sentiment '
+                    'and brand features.',
+                    style={'color': '#bdc3c7', 'fontSize': '12px'}
+                )
+            ])
+        ], style={'background': '#0d1117', 'height': '100%'})
+    ], width=3),
+], className='mb-3'),
+
+dbc.Row([
+    dbc.Col([
+        dbc.Card([
+            dbc.CardBody([
+                html.H6('🔴 TF-IDF', style={'color': '#e74c3c'}),
+                html.P(
+                    'Text analysis technique that finds '
+                    'the most unique and important words '
+                    'for each brand — revealing what '
+                    'makes each brand\'s Reddit '
+                    'discussion truly distinct.',
+                    style={'color': '#bdc3c7', 'fontSize': '12px'}
+                )
+            ])
+        ], style={'background': '#0d1117', 'height': '100%'})
+    ], width=3),
+
+    dbc.Col([
+        dbc.Card([
+            dbc.CardBody([
+                html.H6('🟠 BeautifulSoup',
+                        style={'color': '#e67e22'}),
+                html.P(
+                    'Web scraping library that reads '
+                    'Reddit HTML pages and extracts '
+                    'posts, comments, upvotes and '
+                    'dates automatically every '
+                    'time the scraper runs.',
+                    style={'color': '#bdc3c7', 'fontSize': '12px'}
+                )
+            ])
+        ], style={'background': '#0d1117', 'height': '100%'})
+    ], width=3),
+
+    dbc.Col([
+        dbc.Card([
+            dbc.CardBody([
+                html.H6('🔵 PostgreSQL + Supabase',
+                        style={'color': '#3498db'}),
+                html.P(
+                    'Cloud database that stores all '
+                    'Reddit posts and comments. '
+                    'Currently holding 83 posts and '
+                    '1,156 comments updated '
+                    'automatically.',
+                    style={'color': '#bdc3c7', 'fontSize': '12px'}
+                )
+            ])
+        ], style={'background': '#0d1117', 'height': '100%'})
+    ], width=3),
+
+    dbc.Col([
+        dbc.Card([
+            dbc.CardBody([
+                html.H6('🟢 Plotly Dash',
+                        style={'color': '#2ecc71'}),
+                html.P(
+                    'Interactive dashboard framework '
+                    'that powers all the charts, '
+                    'filters and tabs you see here. '
+                    'Built entirely in Python '
+                    'with no JavaScript needed.',
+                    style={'color': '#bdc3c7', 'fontSize': '12px'}
+                )
+            ])
+        ], style={'background': '#0d1117', 'height': '100%'})
+    ], width=3),
+], className='mb-3'),
+
+html.P(
+    '⚠️ Educational Project: Running on free tier — '
+    'may take 30-60 seconds to load initially. '
+    'Use "Filter by Brand" dropdown to explore each brand.',
+    style={'color': '#e67e22', 'fontSize': '13px',
+           'marginTop': '10px', 'fontStyle': 'italic'}
+),
     # KPI Cards
     html.Div(id='kpi-cards', className='mb-4'),
 
