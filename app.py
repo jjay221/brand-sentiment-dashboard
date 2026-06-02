@@ -100,6 +100,17 @@ app.layout = dbc.Container([
     dbc.Row([
         dbc.Col([
             html.H1('🏆 Brand Sentiment Intelligence Dashboard',
+# Header
+dbc.Row([
+    dbc.Col([
+        html.H1('🏆 Brand Sentiment Intelligence Dashboard',
+                style={'color': '#3498db', 'fontWeight': 'bold', 'marginTop': '20px'}),
+        html.P('Real-time Reddit competitor analysis — Powered by AI',
+               style={'color': '#95a5a6', 'fontSize': '16px'}),
+        html.Hr(style={'borderColor': '#2c3e50'})
+    ])
+]),
+
 # Intro Card
 dbc.Row([
     dbc.Col([
