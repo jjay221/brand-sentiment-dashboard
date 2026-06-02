@@ -406,7 +406,7 @@ dbc.Row([
     # Auto refresh every 5 minutes
 
 
-    dcc.Interval(id='interval', interval=300000, n_intervals=0)
+    dcc.Interval(id='interval', interval=300000, n_intervals=0),
 
 ], fluid=True, style={'backgroundColor': '#0d1117', 'minHeight': '100vh'})
 
