@@ -100,66 +100,62 @@ app.layout = dbc.Container([
     dbc.Row([
         dbc.Col([
             html.H1('🏆 Brand Sentiment Intelligence Dashboard',
-# Header
-dbc.Row([
-    dbc.Col([
-        html.H1('🏆 Brand Sentiment Intelligence Dashboard',
-                style={'color': '#3498db', 'fontWeight': 'bold', 'marginTop': '20px'}),
-        html.P('Real-time Reddit competitor analysis — Powered by AI',
-               style={'color': '#95a5a6', 'fontSize': '16px'}),
-        html.Hr(style={'borderColor': '#2c3e50'})
-    ])
-]),
+                    style={'color': '#3498db', 'fontWeight': 'bold', 'marginTop': '20px'}),
+            html.P('Real-time Reddit competitor analysis — Powered by AI',
+                   style={'color': '#95a5a6', 'fontSize': '16px'}),
+            html.Hr(style={'borderColor': '#2c3e50'})
+        ])
+    ]),
 
-# Intro Card
-dbc.Row([
-    dbc.Col([
-        dbc.Card([
-            dbc.CardBody([
-                dbc.Row([
-                    dbc.Col([
-                        html.H4('🔍 What is BrandPulse?',
-                                style={'color': '#3498db',
-                                       'fontWeight': 'bold'}),
-                        html.P(
-                            'BrandPulse is a free AI-powered brand '
-                            'intelligence tool that analyzes what real '
-                            'people are saying about nutrition and meal '
-                            'replacement brands on Reddit. We collect '
-                            'hundreds of posts and comments daily, then '
-                            'use artificial intelligence to give you '
-                            'real-time consumer insights.',
-                            style={'color': '#bdc3c7', 'fontSize': '15px'}
-                        ),
-                    ], width=8),
-                    dbc.Col([
-                        html.H5('What you can discover:',
-                                style={'color': 'white'}),
-                        html.Ul([
-                            html.Li('✅ Is Reddit positive or negative about this brand?',
-                                   style={'color': '#bdc3c7', 'marginBottom': '5px'}),
-                            html.Li('💬 What are people actually saying in comments?',
-                                   style={'color': '#bdc3c7', 'marginBottom': '5px'}),
-                            html.Li('📊 How does this brand compare to competitors?',
-                                   style={'color': '#bdc3c7', 'marginBottom': '5px'}),
-                            html.Li('🔮 What topics do people discuss most?',
-                                   style={'color': '#bdc3c7', 'marginBottom': '5px'}),
-                        ], style={'paddingLeft': '20px'}),
-                        html.P(
-                            '📌 Tracking: Kachava | Huel | AG1 | Soylent | Orgain',
-                            style={'color': '#f39c12', 'fontWeight': 'bold',
-                                   'marginTop': '10px'}
-                        ),
-                    ], width=4),
-                ]),
-            ])
-        ], style={'background': '#1a252f',
-                  'borderLeft': '4px solid #3498db',
-                  'marginBottom': '20px'})
-    ])
-], className='mb-3'),
+    # Intro Card
+    dbc.Row([
+        dbc.Col([
+            dbc.Card([
+                dbc.CardBody([
+                    dbc.Row([
+                        dbc.Col([
+                            html.H4('🔍 What is BrandPulse?',
+                                    style={'color': '#3498db',
+                                           'fontWeight': 'bold'}),
+                            html.P(
+                                'BrandPulse is a free AI-powered brand '
+                                'intelligence tool that analyzes what real '
+                                'people are saying about nutrition and meal '
+                                'replacement brands on Reddit. We collect '
+                                'hundreds of posts and comments daily, then '
+                                'use artificial intelligence to give you '
+                                'real-time consumer insights.',
+                                style={'color': '#bdc3c7', 'fontSize': '15px'}
+                            ),
+                        ], width=8),
+                        dbc.Col([
+                            html.H5('What you can discover:',
+                                    style={'color': 'white'}),
+                            html.Ul([
+                                html.Li('✅ Is Reddit positive or negative about this brand?',
+                                       style={'color': '#bdc3c7', 'marginBottom': '5px'}),
+                                html.Li('💬 What are people actually saying in comments?',
+                                       style={'color': '#bdc3c7', 'marginBottom': '5px'}),
+                                html.Li('📊 How does this brand compare to competitors?',
+                                       style={'color': '#bdc3c7', 'marginBottom': '5px'}),
+                                html.Li('🔮 What topics do people discuss most?',
+                                       style={'color': '#bdc3c7', 'marginBottom': '5px'}),
+                            ], style={'paddingLeft': '20px'}),
+                            html.P(
+                                '📌 Tracking: Kachava | Huel | AG1 | Soylent | Orgain',
+                                style={'color': '#f39c12', 'fontWeight': 'bold',
+                                       'marginTop': '10px'}
+                            ),
+                        ], width=4),
+                    ]),
+                ])
+            ], style={'background': '#1a252f',
+                      'borderLeft': '4px solid #3498db',
+                      'marginBottom': '20px'})
+        ])
+    ], className='mb-3'),
 
-    # KPI Cards - loaded dynamically
+    # KPI Cards
     html.Div(id='kpi-cards', className='mb-4'),
 
     # Filters Row
