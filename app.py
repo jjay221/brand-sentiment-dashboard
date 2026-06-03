@@ -428,9 +428,23 @@ html.P(
         # ── Tab 5: Posts Explorer ─────────────────────────────
         dbc.Tab(label='🔍 Posts Explorer', children=[
             dbc.Row([
-                dbc.Col(dcc.Graph(id='posts-table'), width=12),
-            ], className='mt-3'),
-        ]),
+                dbc.Tab(label='🔍 Posts Explorer', children=[
+                    dbc.Row([
+                        dbc.Col(dcc.Graph(id='posts-table'), width=12),
+                    ], className='mt-3'),
+                    # Post Reader Panel
+                    dbc.Row([
+                        dbc.Col([
+                            html.Div(id='post-reader', children=[
+                                html.P('👆 Click any row in the table above to read the full post and comments.',
+                                       style={'color': '#95a5a6', 'textAlign': 'center',
+                                              'padding': '30px', 'fontSize': '14px'})
+                            ], style={'backgroundColor': '#1a252f', 'borderRadius': '10px',
+                                      'padding': '20px', 'marginTop': '10px',
+                                      'minHeight': '100px'})
+                        ], width=12),
+                    ]),
+                ]),
 
         # ── Tab 6: Comments Explorer ──────────────────────────
         dbc.Tab(label='📝 Comments Explorer', children=[
@@ -927,27 +941,31 @@ def update_words(brand):
 # Posts Table
 @app.callback(Output('posts-table', 'figure'), Input('brand-filter', 'value'))
 def update_posts_table(brand):
-    df   = load_posts()
+    df = load_posts()
     if brand != 'All':
         df = df[df['brand'] == brand]
-    dff  = df[['brand', 'title', 'vader_sentiment', 'upvotes',
-               'comments_count', 'subreddit', 'posted_date']].copy()
-    dff['title']       = dff['title'].astype(str).str[:80]
+    dff = df[['brand', 'title', 'vader_sentiment', 'upvotes',
+              'comments_count', 'subreddit', 'posted_date']].copy()
+    dff['title'] = dff['title'].astype(str).str[:80]
     dff['posted_date'] = dff['posted_date'].astype(str).str[:10]
-
-    color_map  = {'Positive': '#2ecc71', 'Negative': '#e74c3c',
-                  'Neutral': '#95a5a6', 'N/A': '#3498db'}
+    color_map = {'Positive': '#2ecc71', 'Negative': '#e74c3c',
+                 'Neutral': '#95a5a6', 'N/A': '#3498db'}
     sent_colors = [color_map.get(s, 'white') for s in dff['vader_sentiment']]
-
+    # Add url as hidden column for click detection
+    dff['url'] = df['url'].values
     fig = go.Figure(data=[go.Table(
-        header=dict(values=list(dff.columns),
+        header=dict(values=['brand','title','vader_sentiment','upvotes',
+                            'comments_count','subreddit','posted_date'],
                     fill_color='#2c3e50',
                     font=dict(color='white', size=12), align='left'),
-        cells=dict(values=[dff[c] for c in dff.columns],
-                   fill_color=['#1a252f'] * len(dff.columns),
+        cells=dict(values=[dff['brand'], dff['title'], dff['vader_sentiment'],
+                           dff['upvotes'], dff['comments_count'],
+                           dff['subreddit'], dff['posted_date']],
+                   fill_color=['#1a252f'] * 7,
                    font=dict(color=['white', 'white', sent_colors,
                                     'white', 'white', 'white', 'white'], size=11),
-                   align='left', height=28)
+                   align='left', height=28),
+        customdata=list(zip(df['url'].values, df['title'].values))
     )])
     fig.update_layout(title=f'Posts — {brand}', template='plotly_dark',
                       paper_bgcolor='#0d1117', height=600)
@@ -1412,6 +1430,115 @@ def handle_chat(faq_clicks, user_input, current_messages):
     ]
     return new_messages
 
+# Post Reader Callback
+@app.callback(
+    Output('post-reader', 'children'),
+    Input('posts-table', 'clickData'),
+    prevent_initial_call=True
+)
+def show_post_reader(click_data):
+    if not click_data:
+        return html.P('👆 Click any row to read the full post.',
+                      style={'color': '#95a5a6', 'textAlign': 'center'})
+
+    try:
+        # Get the post title from the click
+        point = click_data['points'][0]
+        # Plotly tables store data in customdata
+        if 'customdata' in point:
+            post_url = point['customdata'][0]
+            post_title = point['customdata'][1]
+        else:
+            return html.P('Could not load post. Try clicking the title cell.',
+                         style={'color': '#e74c3c'})
+
+        # Load post data
+        df = load_posts()
+        df_com = load_comments()
+
+        post = df[df['url'] == post_url]
+        if len(post) == 0:
+            return html.P('Post not found in database.',
+                         style={'color': '#e74c3c'})
+
+        post = post.iloc[0]
+        comments = df_com[df_com['post_url'] == post_url].sort_values(
+            'comment_upvotes', ascending=False)
+
+        # Sentiment color map
+        sent_colors = {
+            'Positive': '#2ecc71',
+            'Negative': '#e74c3c',
+            'Neutral': '#3498db',
+            'N/A': '#95a5a6'
+        }
+        post_color = sent_colors.get(post['vader_sentiment'], '#95a5a6')
+
+        # Build reader
+        reader = html.Div([
+            # Post header
+            html.Div([
+                html.Div([
+                    html.Span(post['brand'],
+                              style={'backgroundColor': '#2980b9', 'color': 'white',
+                                     'padding': '3px 10px', 'borderRadius': '12px',
+                                     'fontSize': '12px', 'marginRight': '10px'}),
+                    html.Span(post['vader_sentiment'],
+                              style={'backgroundColor': post_color, 'color': 'white',
+                                     'padding': '3px 10px', 'borderRadius': '12px',
+                                     'fontSize': '12px', 'marginRight': '10px'}),
+                    html.Span(f"⬆️ {post['upvotes']} upvotes",
+                              style={'color': '#f39c12', 'fontSize': '12px',
+                                     'marginRight': '10px'}),
+                    html.Span(f"r/{post['subreddit']}",
+                              style={'color': '#95a5a6', 'fontSize': '12px'}),
+                ], style={'marginBottom': '10px'}),
+                html.H4(post['title'],
+                        style={'color': 'white', 'marginBottom': '10px'}),
+                html.P(post['content'] if post['content'] not in ['N/A', None, '']
+                       else '(No post body — link post or image)',
+                       style={'color': '#bdc3c7', 'fontSize': '14px',
+                              'lineHeight': '1.6', 'marginBottom': '15px'}),
+                html.A('🔗 View on Reddit', href=post_url, target='_blank',
+                       style={'color': '#3498db', 'fontSize': '13px'}),
+            ], style={'borderBottom': '1px solid #2c3e50', 'paddingBottom': '15px',
+                      'marginBottom': '20px'}),
+
+            # Comments section
+            html.H5(f'💬 Comments ({len(comments)})',
+                    style={'color': 'white', 'marginBottom': '15px'}),
+
+            html.Div([
+                html.Div([
+                    html.Div([
+                        html.Span(row['vader_sentiment'],
+                                  style={'color': sent_colors.get(row['vader_sentiment'],
+                                                                   '#95a5a6'),
+                                         'fontSize': '11px', 'fontWeight': 'bold',
+                                         'marginRight': '10px'}),
+                        html.Span(f"⬆️ {row['comment_upvotes']}",
+                                  style={'color': '#f39c12', 'fontSize': '11px'}),
+                    ], style={'marginBottom': '4px'}),
+                    html.P(row['comment_text'],
+                           style={'color': '#ecf0f1', 'fontSize': '13px',
+                                  'lineHeight': '1.5', 'margin': '0'}),
+                ], style={
+                    'backgroundColor': '#0d1117',
+                    'borderLeft': f'3px solid {sent_colors.get(row["vader_sentiment"], "#95a5a6")}',
+                    'padding': '10px 15px',
+                    'borderRadius': '0 8px 8px 0',
+                    'marginBottom': '8px'
+                })
+                for _, row in comments.head(20).iterrows()
+            ]) if len(comments) > 0 else html.P('No comments found for this post.',
+                                                  style={'color': '#95a5a6'})
+        ])
+
+        return reader
+
+    except Exception as e:
+        return html.P(f'Error loading post: {str(e)}',
+                      style={'color': '#e74c3c'})
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8050))
     app.run(debug=False, host='0.0.0.0', port=port)
