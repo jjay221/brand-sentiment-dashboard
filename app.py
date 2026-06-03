@@ -6,6 +6,7 @@
 # ============================================================
 
 import os
+from dash import ALL
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -561,6 +562,88 @@ html.P(
 
     # Auto refresh every 5 minutes
 
+# ── Floating Chatbot ──────────────────────────────────
+        html.Div([
+            # Chat bubble button
+            html.Button('🤖', id='chat-toggle', n_clicks=0,
+                style={
+                    'position': 'fixed', 'bottom': '30px', 'right': '30px',
+                    'width': '60px', 'height': '60px', 'borderRadius': '50%',
+                    'backgroundColor': '#3498db', 'color': 'white',
+                    'fontSize': '28px', 'border': 'none', 'cursor': 'pointer',
+                    'zIndex': '9999', 'boxShadow': '0 4px 15px rgba(52,152,219,0.5)'
+                }),
+            # Chat window
+            html.Div(id='chat-window', children=[
+                # Header
+                html.Div([
+                    html.Span('🤖 Dashboard Assistant',
+                              style={'color': 'white', 'fontWeight': 'bold', 'fontSize': '16px'}),
+                    html.Button('✕', id='chat-close', n_clicks=0,
+                                style={'background': 'none', 'border': 'none',
+                                       'color': 'white', 'fontSize': '18px',
+                                       'cursor': 'pointer', 'float': 'right'})
+                ], style={'backgroundColor': '#2980b9', 'padding': '12px 15px',
+                          'borderRadius': '12px 12px 0 0'}),
+
+                # Messages area
+                html.Div(id='chat-messages', children=[
+                    html.Div('👋 Hi! I can help you understand this dashboard. Click a question or type below!',
+                             style={'background': '#1a252f', 'color': '#ecf0f1',
+                                    'padding': '10px 12px', 'borderRadius': '10px',
+                                    'marginBottom': '8px', 'fontSize': '13px'})
+                ], style={'padding': '12px', 'height': '320px',
+                          'overflowY': 'auto', 'backgroundColor': '#0d1117'}),
+
+                # Quick questions
+                html.Div([
+                    html.P('💡 Quick Questions:', style={'color': '#95a5a6',
+                            'fontSize': '11px', 'margin': '0 0 6px 0'}),
+                    html.Div([
+                        html.Button(q, id={'type': 'faq-btn', 'index': i},
+                                    n_clicks=0,
+                                    style={'display': 'block', 'width': '100%',
+                                           'textAlign': 'left', 'background': '#1a252f',
+                                           'color': '#3498db', 'border': '1px solid #2c3e50',
+                                           'borderRadius': '6px', 'padding': '6px 10px',
+                                           'marginBottom': '4px', 'cursor': 'pointer',
+                                           'fontSize': '12px'})
+                        for i, q in enumerate([
+                            '📊 What is sentiment analysis?',
+                            '🔢 How is the score calculated?',
+                            '🆚 VADER vs BERT — what\'s the difference?',
+                            '🏆 Which brand is performing best?',
+                            '🔍 How do I search a new brand?',
+                            '📅 How fresh is the data?',
+                            '⭐ What do upvotes mean?',
+                            '📈 What does the Overview tab show?',
+                            '💬 What is Comments Analysis?',
+                            '🔤 What is Word Analysis?',
+                        ])
+                    ])
+                ], style={'padding': '10px 12px', 'backgroundColor': '#0d1117',
+                          'borderTop': '1px solid #1a252f', 'maxHeight': '200px',
+                          'overflowY': 'auto'}),
+
+                # Input area
+                html.Div([
+                    dbc.Input(id='chat-input', placeholder='Type a question...',
+                              type='text', debounce=True,
+                              style={'backgroundColor': '#1a252f', 'color': 'white',
+                                     'border': '1px solid #2c3e50', 'borderRadius': '8px',
+                                     'fontSize': '13px'}),
+                ], style={'padding': '10px 12px', 'backgroundColor': '#0d1117',
+                          'borderTop': '1px solid #1a252f',
+                          'borderRadius': '0 0 12px 12px'}),
+
+            ], style={
+                'position': 'fixed', 'bottom': '100px', 'right': '30px',
+                'width': '360px', 'borderRadius': '12px',
+                'boxShadow': '0 8px 32px rgba(0,0,0,0.5)',
+                'zIndex': '9998', 'display': 'none',
+                'border': '1px solid #2c3e50'
+            }),
+        ]),
 
     dcc.Interval(id='interval', interval=300000, n_intervals=0),
 
@@ -1193,7 +1276,142 @@ def search_any_brand(n_clicks, brand_name):
         return f'❌ Unexpected error: {str(e)}', ''
 # ============================================================
 # Run
+# =========
+#
 # ============================================================
+# Chatbot Callbacks
+# ============================================================
+
+FAQ = {
+    '📊 What is sentiment analysis?':
+        '📊 Sentiment analysis uses AI to determine if text is Positive, Negative, or Neutral. We analyze Reddit posts and comments about each brand to understand how people feel about them online.',
+
+    '🔢 How is the score calculated?':
+        '🔢 We use VADER (Valence Aware Dictionary and sEntiment Reasoner), a tool trained on social media text. It gives each post a compound score from -1 (very negative) to +1 (very positive). Posts above 0.05 = Positive, below -0.05 = Negative, in between = Neutral.',
+
+    '🆚 VADER vs BERT — what\'s the difference?':
+        '🆚 VADER is a rule-based system — fast and great for social media slang. BERT is a deep learning model from Google that understands context better. We run both and compare them. BERT is more accurate but slower.',
+
+    '🏆 Which brand is performing best?':
+        '🏆 Check the Overview tab! The "Positive Sentiment Rate by Brand" bar chart ranks all brands. Green bars = above 50% positive. The brand with the tallest green bar is winning on Reddit sentiment.',
+
+    '🔍 How do I search a new brand?':
+        '🔍 Click the "🔍 Search Any Brand" tab, type any brand name (e.g. Nike, Whey Protein, Herbalife), and hit Search Reddit. We\'ll scrape the top 25 Reddit posts in real-time and show you the sentiment breakdown!',
+
+    '📅 How fresh is the data?':
+        '📅 The 5 core brands (Kachava, Huel, AG1, Soylent, Orgain) were scraped and loaded into the database. New brand searches are cached for 24 hours — so if someone already searched a brand today, you\'ll get instant results.',
+
+    '⭐ What do upvotes mean?':
+        '⭐ Reddit upvotes = community agreement. A post with high upvotes means many Redditors saw it and agreed. In the Engagement tab, you can see which brands get the most upvoted posts — higher upvotes = more visible discussion.',
+
+    '📈 What does the Overview tab show?':
+        '📈 The Overview tab shows: (1) KPI cards with total posts, comments, positive/negative rates, (2) a sentiment trend chart over time, (3) overall sentiment pie chart, and (4) positive rate comparison across all brands.',
+
+    '💬 What is Comments Analysis?':
+        '💬 Comments Analysis digs into the Reddit comments (not just post titles). Comments often reveal more nuanced opinions. You\'ll see sentiment breakdown of comments, top commented posts, and how comment sentiment compares to post sentiment.',
+
+    '🔤 What is Word Analysis?':
+        '🔤 Word Analysis shows the most frequently used words in posts and comments for each brand. It filters out common words (the, is, and...) to show meaningful terms. If "side effects" appears often for a brand — that\'s a red flag!',
+}
+
+def match_faq(user_input):
+    """Match user typed input to closest FAQ answer."""
+    user_input = user_input.lower()
+    keywords = {
+        'sentiment': '📊 What is sentiment analysis?',
+        'score': '🔢 How is the score calculated?',
+        'calculated': '🔢 How is the score calculated?',
+        'vader': '🆚 VADER vs BERT — what\'s the difference?',
+        'bert': '🆚 VADER vs BERT — what\'s the difference?',
+        'best': '🏆 Which brand is performing best?',
+        'winning': '🏆 Which brand is performing best?',
+        'search': '🔍 How do I search a new brand?',
+        'new brand': '🔍 How do I search a new brand?',
+        'fresh': '📅 How fresh is the data?',
+        'data': '📅 How fresh is the data?',
+        'upvote': '⭐ What do upvotes mean?',
+        'overview': '📈 What does the Overview tab show?',
+        'comment': '💬 What is Comments Analysis?',
+        'word': '🔤 What is Word Analysis?',
+        'positive': '🔢 How is the score calculated?',
+        'negative': '🔢 How is the score calculated?',
+        'measure': '🔢 How is the score calculated?',
+    }
+    for keyword, question in keywords.items():
+        if keyword in user_input:
+            return FAQ[question]
+    return "🤔 I'm not sure about that one! Try clicking one of the quick questions above, or ask about: sentiment scoring, VADER vs BERT, brand comparisons, or how to use each tab."
+
+
+# Toggle chat window open/close
+@app.callback(
+    Output('chat-window', 'style'),
+    Input('chat-toggle', 'n_clicks'),
+    Input('chat-close', 'n_clicks'),
+    State('chat-window', 'style'),
+    prevent_initial_call=True
+)
+def toggle_chat(open_clicks, close_clicks, current_style):
+    from dash import ctx
+    if ctx.triggered_id == 'chat-close':
+        return {**current_style, 'display': 'none'}
+    current_display = current_style.get('display', 'none')
+    new_display = 'none' if current_display == 'block' else 'block'
+    return {**current_style, 'display': new_display}
+
+
+# Handle FAQ button clicks and typed input
+@app.callback(
+    Output('chat-messages', 'children'),
+    Input({'type': 'faq-btn', 'index': ALL}, 'n_clicks'),
+    Input('chat-input', 'value'),
+    State('chat-messages', 'children'),
+    prevent_initial_call=True
+)
+def handle_chat(faq_clicks, user_input, current_messages):
+    from dash import ctx
+
+    questions = [
+        '📊 What is sentiment analysis?',
+        '🔢 How is the score calculated?',
+        '🆚 VADER vs BERT — what\'s the difference?',
+        '🏆 Which brand is performing best?',
+        '🔍 How do I search a new brand?',
+        '📅 How fresh is the data?',
+        '⭐ What do upvotes mean?',
+        '📈 What does the Overview tab show?',
+        '💬 What is Comments Analysis?',
+        '🔤 What is Word Analysis?',
+    ]
+
+    user_msg = None
+    answer = None
+
+    triggered = ctx.triggered_id
+    if isinstance(triggered, dict) and triggered.get('type') == 'faq-btn':
+        idx = triggered['index']
+        if faq_clicks[idx]:
+            user_msg = questions[idx]
+            answer = FAQ[user_msg]
+    elif user_input and user_input.strip():
+        user_msg = user_input.strip()
+        answer = match_faq(user_msg)
+
+    if not user_msg or not answer:
+        return current_messages
+
+    msg_style = {'padding': '10px 12px', 'borderRadius': '10px',
+                 'marginBottom': '8px', 'fontSize': '13px', 'lineHeight': '1.5'}
+
+    new_messages = current_messages + [
+        html.Div(f'You: {user_msg}',
+                 style={**msg_style, 'background': '#2c3e50',
+                        'color': '#ecf0f1', 'textAlign': 'right'}),
+        html.Div(f'🤖 {answer}',
+                 style={**msg_style, 'background': '#1a252f', 'color': '#ecf0f1'}),
+    ]
+    return new_messages
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8050))
     app.run(debug=False, host='0.0.0.0', port=port)
